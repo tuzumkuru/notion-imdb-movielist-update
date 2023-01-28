@@ -9,6 +9,7 @@ This is a project that I am developing to learn Python, environments, and APIs. 
 ## Installation
 
 ### Setting up dependencies
+
 The package and dependencies are managed by pipenv (https://pipenv.pypa.io) so it is strongly recommended to be installed and used
 
 You can install pipenv as below or look at the documentation of the tool
@@ -24,6 +25,7 @@ git clone https://github.com/tuzumkuru/notion-imdb.git
 ```
 
 ### Setting up your Notion
+
 Go to https://www.notion.so/my-integrations web site and create an internal integration with Read and Update capabilities.
 
 Duplicate this page (will be provided soon) to your workspace and connect your integration with your page.
@@ -51,6 +53,7 @@ pipenv install
 pipenv will create an environment with necessery dependencies.
 
 ## Usage
+
 After finishing the installation steps you can run the script as below:
 
 ```bash
@@ -63,6 +66,16 @@ Pull requests are welcome. For major changes, please open an issue first
 to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
+
+## Acknowledgments
+
+This readme file is created using a template from https://www.makeareadme.com
+
+Thanks to @ramnes Notion Python SDK (https://github.com/ramnes/notion-sdk-py)
+
+Thanks to Notion and IMDB
+
 
 ## License
 
