@@ -4,7 +4,7 @@ Notion-IMDB Integration is a Python script that automizes updating ones movie da
 
 It checks a specific table and fills in the empty cells with the information on IMDB
 
-This is a project that I've developed to learn Python, environments, and APIs. Feel free to comment on the projects for any aspects. 
+This is a project that I am developing to learn Python, environments, and APIs. Feel free to comment on the projects for any aspects. 
 
 ## Installation
 
