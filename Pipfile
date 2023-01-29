@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 notion-client = "*"
 python-dotenv = "*"
+cinemagoer = "*"
 
 [dev-packages]
 
