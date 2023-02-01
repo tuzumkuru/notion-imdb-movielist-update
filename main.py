@@ -128,7 +128,7 @@ def UpdatePage(page):
         except Exception as e:
             print("Error: " + str(e))
         try:
-            page["properties"]["Description"]["rich_text"] =  [{'type': 'text','text': {'content': shorten_string(string=movie.summary(),max_length=1000)}}]
+            page["properties"]["Description"]["rich_text"] =  [{'type': 'text','text': {'content': shorten_string(string=movie["plot outline"],max_length=1000)}}]
         except Exception as e:
             print("Error: " + str(e))
         
@@ -157,7 +157,7 @@ def GetMovie(movie_title:str="",movie_id:str="") -> Movie.Movie:
     if movie_title != "":
         movies = cinemagoer.search_movie(title=movie_title)
         for movie in movies:
-            if movie["title"] == movie_title:
+            if movie["title"].lower() == movie_title.lower():
                 return GetMovie(movie_id=movie.getID())                
 
     return  result
