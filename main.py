@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 from pprint import pprint
 from imdb import Cinemagoer
@@ -7,7 +8,7 @@ from imdb import Movie
 from notion_client import Client
 
 
-def FindDatabaseId(database_name:str) -> str:
+def find_database_id(database_name:str) -> str:
     results = notion.search(query=NOTION_DATABASE_NAME, filter=
        {
                 "property": "object",
@@ -19,8 +20,9 @@ def FindDatabaseId(database_name:str) -> str:
 
     return database_id
 
-def GetEmptyPages(database_id:str):
-    missingPagesFilter = {
+
+def get_empty_pages(database_id:str):
+    empty_page_filter = {
         "filter": {
             "and": [
                 {
@@ -65,14 +67,16 @@ def GetEmptyPages(database_id:str):
         }
     }
 
-    return notion.databases.query(database_id=database_id, **missingPagesFilter).get("results")
+    return notion.databases.query(database_id=database_id, **empty_page_filter).get("results")
 
-def GetGenres(movie:Movie.Movie):    
+
+def get_genres(movie:Movie.Movie):    
     genres = []
     if len(movie["genres"]) > 0:        
         for genre in movie["genres"]:
             genres.append({'name': genre})
     return genres
+
 
 def shorten_string(string, max_length=2000):
     if len(string) > max_length:
@@ -80,7 +84,8 @@ def shorten_string(string, max_length=2000):
     else:
         return string
 
-def UpdatePage(page):    
+
+def update_page_info(page):    
     # Retreive the page from API 
     page = notion.pages.retrieve(page_id=page["id"])
 
@@ -93,9 +98,9 @@ def UpdatePage(page):
     # Search for the movie in IMDB
     if imdb_link:
         movie_id = imdb_link.rstrip('/').split('/')[-1][2:]
-        movie = GetMovie(movie_id=movie_id) 
+        movie = get_movie(movie_id=movie_id) 
     else:
-        movie = GetMovie(movie_title=movie_title)
+        movie = get_movie(movie_title=movie_title)
 
     if movie != None:
         # Update Page info with the IMDB data
@@ -133,7 +138,7 @@ def UpdatePage(page):
             print("Error: " + str(e))
         
         try:
-            genres = GetGenres(movie=movie)
+            genres = get_genres(movie=movie)
             if(movie['kind']=="tv series"):
                 genres.insert(0,{"name":"TV Series"})
             page["properties"]["Genre"]["multi_select"] = genres
@@ -143,9 +148,11 @@ def UpdatePage(page):
 
         # Save the page at Notion
         notion.pages.update(page_id=page["id"],**page)
-    
+    else:
+        print("Error: Can not find the related movie!")
 
-def GetMovie(movie_title:str="",movie_id:str="") -> Movie.Movie: 
+
+def get_movie(movie_title:str="",movie_id:str="") -> Movie.Movie: 
     result = None
 
     if movie_id != "":
@@ -158,12 +165,17 @@ def GetMovie(movie_title:str="",movie_id:str="") -> Movie.Movie:
         movies = cinemagoer.search_movie(title=movie_title)
         for movie in movies:
             if movie["title"].lower() == movie_title.lower():
-                return GetMovie(movie_id=movie.getID())                
+                return get_movie(movie_id=movie.getID())                
 
     return  result
 
-    
 
+def get_database_id_from_url(database_url:str) -> str:
+    result = re.search(r"notion\.so/[^/]+/(\w+)", database_url).group(1)
+    if len(result) == 32:
+        return result
+    else:
+        return None
 
 
 if __name__ == "__main__":
@@ -174,8 +186,9 @@ if __name__ == "__main__":
     else:
         load_dotenv()
 
-    NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
-    NOTION_DATABASE_NAME = os.getenv("NOTION_DATABASE_NAME", "")
+    NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+    NOTION_DATABASE_URL = os.getenv("NOTION_DATABASE_URL")
+    NOTION_DATABASE_NAME = os.getenv("NOTION_DATABASE_NAME")
 
     while NOTION_TOKEN == "":
         print("NOTION_TOKEN not found.")
@@ -185,19 +198,28 @@ if __name__ == "__main__":
     notion = Client(auth=NOTION_TOKEN)
     cinemagoer = Cinemagoer()
 
-    # Retrieve the database ID based on its name
-    database_id = FindDatabaseId(database_name=NOTION_DATABASE_NAME)
+    # Find Database ID
+    if NOTION_DATABASE_URL!="":
+        DATABASE_ID = get_database_id_from_url(NOTION_DATABASE_URL)
+    else:
+        DATABASE_ID = find_database_id(database_name=NOTION_DATABASE_NAME)  # Retrieve the database ID based on its name
 
+    while DATABASE_ID == "":
+        print("Database can not be found.")
+        NOTION_DATABASE_URL = input("Enter your database url:").strip()
+        DATABASE_ID = get_database_id_from_url(NOTION_DATABASE_URL)
+
+    
     # Retrieve empty pages
-    pages = GetEmptyPages(database_id=database_id)    
+    pages = get_empty_pages(database_id=DATABASE_ID)    
 
     # Fill in empty pages
     if pages != None and pages !=  []:
         print("Found " + str(len(pages)) + " empty entries. Updating now...")
         for x in pages:
-            UpdatePage(x)
+            update_page_info(x)
     else:
         print("No entries found")
 
-    print("Succesfull")
+    print("Finished")
 
