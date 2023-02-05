@@ -149,7 +149,7 @@ def update_page_info(page):
         # Save the page at Notion
         notion.pages.update(page_id=page["id"],**page)
     else:
-        print("Error: Can not find the related movie!")
+        print("Error: Couldn't find the related movie!")
 
 
 def get_movie(movie_title:str="",movie_id:str="") -> Movie.Movie: 
