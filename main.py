@@ -28,7 +28,7 @@ def get_empty_pages(database_id:str):
                 {
                     "or": [
                         {
-                            "property": "Name",
+                            "property": "Title",
                             "title": {
                                 "is_not_empty": True
                             }
@@ -44,7 +44,7 @@ def get_empty_pages(database_id:str):
                 {
                     "or": [
                         {
-                            "property": "Length [min]",
+                            "property": "Duration [min]",
                             "number": {
                                 "is_empty": True
                             }
@@ -91,7 +91,7 @@ def update_page_info(page):
 
     # Get the Movie Title and IMDB Links
     imdb_link = page["properties"]["IMDB"]["url"]
-    movie_title = page["properties"]["Name"]["title"][0]["text"]["content"]
+    movie_title = page["properties"]["Title"]["title"][0]["text"]["content"]
 
     print("Updating the movie " + str(movie_title))
 
@@ -105,7 +105,7 @@ def update_page_info(page):
     if movie != None:
         # Update Page info with the IMDB data
         try:
-            page["properties"]["Name"]["title"] = [{'type': 'text','text': {'content': movie["title"]}}]
+            page["properties"]["Title"]["title"] = [{'type': 'text','text': {'content': movie["title"]}}]
         except Exception as e:
             print("Error: " + str(e))
 
@@ -119,7 +119,7 @@ def update_page_info(page):
             page["properties"]["Director"]["select"] = {'name': "-"}
 
         try:
-             page["properties"]["Length [min]"]["number"] = int(movie["runtimes"][0])
+             page["properties"]["Duration [min]"]["number"] = int(movie["runtimes"][0])
         except Exception as e:
             print("Error: " + str(e))
 
