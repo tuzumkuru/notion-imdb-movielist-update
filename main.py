@@ -91,7 +91,10 @@ def update_page_info(page):
 
     # Get the Movie Title and IMDB Links
     imdb_link = page["properties"]["IMDB"]["url"]
-    movie_title = page["properties"]["Title"]["title"][0]["text"]["content"]
+    movie_title = ""
+    
+    if len(page["properties"]["Title"]["title"]) > 0:
+        movie_title = page["properties"]["Title"]["title"][0]["text"]["content"]
 
     print("Updating the movie " + str(movie_title))
 
@@ -99,8 +102,10 @@ def update_page_info(page):
     if imdb_link:
         movie_id = imdb_link.rstrip('/').split('/')[-1][2:]
         movie = get_movie(movie_id=movie_id) 
-    else:
+    elif movie_title != "":
         movie = get_movie(movie_title=movie_title)
+    else:
+        movie = None
 
     if movie != None:
         # Update Page info with the IMDB data
