@@ -32,9 +32,9 @@ Run pipenv in the project folder
 pipenv install
 ```
 
-pipenv will create an environment with necessery dependencies.
+pipenv will create an environment with the necessary dependencies.
 
-Alternatively you can install the dependencies using pip and the requirements.txt file. 
+Alternatively, you can install the dependencies using pip and the requirements.txt file. 
 
 ```bash
 pip install -r requirements.txt
@@ -42,16 +42,16 @@ pip install -r requirements.txt
 
 ### Setting up your Notion
 
-Go to https://www.notion.so/my-integrations web site and create an internal integration with Read and Update capabilities.
+Go to https://www.notion.so/my-integrations website and create an internal integration with Read and Update capabilities.
 
 Duplicate this page (https://www.notion.so/tuzumkuru/819881b338594c6e9efa4902a6dcd37b) to your workspace and connect your integration with your page.
 
-To add the connection after duplicating click to the ... on the top right corner of your page and hover on Add Connections and select your integration you created. 
+To add the connection after duplicating click on the ... on the top right corner of your page and hover on Add Connections and select the integration you created. 
 
 
 ### Setting up .env File
 
-There is an .env_example file created as a template to hold some user specific values
+There is a .env_example file created as a template to hold some user-specific values
 
 Rename or copy it as .env and add your specific values in
 
@@ -64,7 +64,7 @@ NOTION_DATABASE_NAME is the database name you use to store your movie files. It 
 
 ## Usage
 
-After finishing the installation steps you can run the script as below if you've set up the environment:
+After finishing the installation steps you can run the script below if you've set up the environment:
 
 ```bash
 pipenv run python main.py
@@ -78,19 +78,28 @@ python main.py
 
 The script will search the database for missing director and duration properties and when found will try to find the movie from the IMDB database using Cinemagoers. If IMDB URL is provided it will look through the Movie ID and find an exact result if the URL is correct. If not provided, it will search IMDB with the name provided and check for the exact name match. So providing name may give wrong results. 
 
+You can create recurring tasks to run the script in a determined interval. 
+
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+Pull requests are welcome.
 
-Please make sure to update tests as appropriate.
+## Future Work
+
+The script would be better if it is triggered through a new entry event from Notion. 
+
+Creating a docker image would make the script easier to use. 
+
+Will test the script and make it work on different architectures and OSs.
 
 
 ## Acknowledgments
 
 This readme file is created using a template from https://www.makeareadme.com
 
-Thanks to @ramnes Notion Python SDK (https://github.com/ramnes/notion-sdk-py)
+Thanks to @ramnes for Notion Python SDK (https://github.com/ramnes/notion-sdk-py)
+
+Thanks to the Cinemagoer team (https://github.com/cinemagoer)
 
 Thanks to Notion and IMDB
 
