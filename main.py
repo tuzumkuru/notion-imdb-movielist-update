@@ -83,6 +83,15 @@ def shorten_string(string, max_length=2000):
         return string[:max_length-3] + '...'
     else:
         return string
+    
+def get_id_from_url(url):
+    pattern = r"tt(\d+)"
+    match = re.search(pattern, url)
+    if match:
+        extracted_part = match.group(1)
+        return extracted_part
+    else:
+        return None   
 
 
 def update_page_info(page):    
@@ -100,7 +109,7 @@ def update_page_info(page):
 
     # Search for the movie in IMDB
     if imdb_link:
-        movie_id = imdb_link.rstrip('/').split('/')[-1][2:]
+        movie_id = get_id_from_url(imdb_link)
         movie = get_movie(movie_id=movie_id) 
     elif movie_title != "":
         movie = get_movie(movie_title=movie_title)
