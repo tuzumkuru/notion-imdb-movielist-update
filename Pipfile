@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-notion-client = "*"
-python-dotenv = "*"
-cinemagoer = "*"
+notion-client = "==2.0.0"
+cinemagoer = "==2022.12.27"
+python-dotenv = "==0.21.1"
 
 [dev-packages]
 
 [requires]
-python_version = "3"
+python_version = "3.9"
