@@ -1,8 +1,8 @@
-# Notion IMDB Integration
+# Notion-IMDB Movie List Update
 
-Notion-IMDB Integration is a Python script that automizes updating ones movie database with information gathered from IMDB
+Notion-IMDB Movie List Update is a Python script that automizes updating ones movie database with information gathered from IMDB.
 
-It checks a specific table and fills in the empty cells with the information on IMDB
+It checks a specific table and fills in the empty cells using the information on IMDB.
 
 This is a project that I am developing to learn Python, environments, and APIs. Feel free to comment on the project about anything (structure, design, implementation, etc.). 
 
@@ -13,28 +13,34 @@ This is a project that I am developing to learn Python, environments, and APIs. 
 Clone the repository using git clone.
 
 ```bash
-git clone https://github.com/tuzumkuru/notion-imdb.git
+git clone https://github.com/tuzumkuru/notion-imdb-movielist-update.git
 ```
 
 ### Setting up dependencies
 
-The package and dependencies are managed by pipenv (https://pipenv.pypa.io) so it is strongly recommended to be installed and used
+The package and dependencies are managed by venv so it is strongly recommended to be installed and used.
 
-You can install pipenv as below or look at the documentation of the tool
-
-```bash
-pip install --user pipenv
-```
-
-Run pipenv in the project folder
+You can install venv as below or look at the documentation of the tool:
 
 ```bash
-pipenv install
+sudo apt install python3.11-venv # You should use the appropriate version for your Python
 ```
 
-pipenv will create an environment with the necessary dependencies.
+Create an environment using venv in the project folder:
 
-Alternatively, you can install the dependencies using pip and the requirements.txt file. 
+```bash
+python -m venv .venv
+```
+
+Python venv will create an environment that you can use isolated from the system.
+
+To use the environment source the activate file:
+
+```bash
+source .venv/bin/activate
+```
+
+Now, you can install the dependencies using the requirements.txt:
 
 ```bash
 pip install -r requirements.txt
@@ -42,7 +48,7 @@ pip install -r requirements.txt
 
 ### Setting up your Notion
 
-Go to https://www.notion.so/my-integrations website and create an internal integration with Read and Update capabilities.
+Go to https://www.notion.so/my-integrations page and create an internal integration with Read and Update capabilities.
 
 Duplicate this page (https://www.notion.so/tuzumkuru/819881b338594c6e9efa4902a6dcd37b) to your workspace and connect your integration with your page.
 
@@ -67,16 +73,10 @@ NOTION_DATABASE_NAME is the database name you use to store your movie files. It 
 After finishing the installation steps you can run the script below if you've set up the environment:
 
 ```bash
-pipenv run python main.py
-```
-
-If you did not set up an environment you can run main.py with your python interpreter
-
-```bash
 python main.py
 ```
 
-The script will search the database for missing director and duration properties and when found will try to find the movie from the IMDB database using Cinemagoers. If IMDB URL is provided it will look through the Movie ID and find an exact result if the URL is correct. If not provided, it will search IMDB with the name provided and check for the exact name match. So providing name may give wrong results. 
+The script will search the database for missing director or duration properties and when found will try to find the movie from the IMDB database using Cinemagoers. If IMDB URL is provided it will look through the Movie ID and find an exact result if the URL is correct. If not provided, it will search IMDB with the name provided and check for the exact name match. So providing name may give wrong results. 
 
 You can create recurring tasks to run the script in a determined interval. 
 
