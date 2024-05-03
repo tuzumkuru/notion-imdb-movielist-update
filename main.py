@@ -98,6 +98,20 @@ def update_page_info(page):
     # Retreive the page from API 
     page = notion.pages.retrieve(page_id=page["id"])
 
+    properties_to_update = {
+        "Title": page["properties"].get("Title"),
+        "IMDB": page["properties"].get("IMDB"),
+        "Director": page["properties"].get("Director"),
+        "Duration [min]": page["properties"].get("Duration [min]"),
+        "IMDB Rating": page["properties"].get("IMDB Rating"),
+        "Description": page["properties"].get("Description"),
+        "Genre": page["properties"].get("Genre"),
+        # Add more properties as needed
+    }
+
+    page["properties"] = properties_to_update
+
+
     # Get the Movie Title and IMDB Links
     imdb_link = page["properties"]["IMDB"]["url"]
     movie_title = ""
