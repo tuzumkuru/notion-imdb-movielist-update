@@ -113,10 +113,12 @@ def update_page_info(page, imdb_adapter, notion_client: Client):
             logger.error(f"Error updating Title for {movie_title}: {e}")
 
         try:
-            if not movie.is_series:
-                if movie.director:
-                    properties["Director"] = {'type': 'select', 'select': {'name': movie.director}}
-                    updated_properties.append(f"Director: {movie.director}")
+            director_name = "N/A"
+            if not movie.is_series and movie.director:
+                director_name = movie.director
+            
+            properties["Director"] = {'type': 'select', 'select': {'name': director_name}}
+            updated_properties.append(f"Director: {director_name}")
         except Exception as e:
             logger.error(f"Error updating Director for {movie_title}: {e}")
 
