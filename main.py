@@ -113,7 +113,7 @@ def update_page(page: dict, imdb_adapter: IMDbAdapter, notion_api: NotionAPI):
         logger.info(f"Successfully updated {movie.title}:\n" + "\n".join(f"- {prop}" for prop in updated_properties))
 
     except (NotionAPIError, MovieNotFound) as e:
-        logger.error(f"Failed to update page {page_id}: {e}")
+        logger.error(f"Failed to update: {e}")
 
 def main():
     if not config.NOTION_TOKEN:
