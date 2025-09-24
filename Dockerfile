@@ -1,11 +1,11 @@
 # Use the official Python image as a base image
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the Python script and requirements.txt into the container
-COPY main.py .
+# Copy the application files into the container
+COPY *.py .
 COPY requirements.txt .
 
 # Install dependencies

@@ -111,7 +111,7 @@ Make sure you have Docker installed on your machine ([Docker Installation Guide]
 Enter the directory cloned and run the following command
 
 ```bash
-docker build -t tuzumkuru:notion-imdb-movielist-update .
+docker build -t notion-imdb-movielist-update .
 ```
 
 
@@ -120,13 +120,13 @@ docker build -t tuzumkuru:notion-imdb-movielist-update .
 Replace _your_token_ and _your_database_url_ or _your_database_name_ with your actual values.
 
 ```bash
-docker run -d --name movielist_update -e NOTION_DATABASE_URL=your-database-url -e NOTION_TOKEN=your-token -e NOTION_DATABASE_NAME=your-database-name tuzumkuru:notion-imdb-movielist-update
+docker run -d --name movielist_update -e NOTION_DATABASE_URL=your-database-url -e NOTION_TOKEN=your-token -e NOTION_DATABASE_NAME=your-database-name notion-imdb-movielist-update
 ```
 
 Alternatively you can pass a .env file that contains the variables.
 
 ```bash
-docker run -d --name movielist_update --env-file .env tuzumkuru:notion-imdb-movielist-update
+docker run -d --name movielist_update --env-file .env notion-imdb-movielist-update
 ```
 
 ## Contributing
