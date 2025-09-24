@@ -1,67 +1,14 @@
-import re
 import sys
-from notion_client import Client
 
 import config
 from imdbinfo_adapter import IMDbInfoAdapter
 from logger import get_logger
+from notion_api import NotionAPI
+from exceptions import NotionAPIError, MovieNotFound
+from imdb_adapter import IMDbAdapter
+import re
 
 logger = get_logger(__name__)
-
-def find_database_id(database_name:str, notion_client: Client) -> str:
-    results = notion_client.search(query=database_name, filter={
-        "property": "object",
-        "value": "database"
-    }).get("results")
-    database_id = results[0]["id"]
-    return database_id
-
-def get_empty_pages(database_id:str, notion_client: Client):
-    empty_page_filter = {
-        "filter": {
-            "and": [
-                {
-                    "or": [
-                        {
-                            "property": "Title",
-                            "title": {
-                                "is_not_empty": True
-                            }
-                        },
-                        {
-                            "property": "IMDB",
-                            "url": {
-                                "is_not_empty": True
-                            }
-                        }
-                    ]
-                },
-                {
-                    "or": [
-                        {
-                            "property": "Duration [min]",
-                            "number": {
-                                "is_empty": True
-                            }
-                        },
-                        {
-                            "property": "Director",
-                            "select": {
-                                "is_empty": True
-                            }
-                        },
-                        {
-                            "property": "IMDB",
-                            "url": {
-                                "is_empty": True
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-    return notion_client.databases.query(database_id=database_id, **empty_page_filter).get("results")
 
 def get_genres(movie):
     genres = []
@@ -85,25 +32,29 @@ def get_id_from_url(url):
     else:
         return None
 
-def update_page_info(page, imdb_adapter, notion_client: Client):
-    page = notion_client.pages.retrieve(page_id=page["id"])
+def update_page(page: dict, imdb_adapter: IMDbAdapter, notion_api: NotionAPI):
+    page_id = page["id"]
+    try:
+        page = notion_api.retrieve_page(page_id)
 
-    imdb_link = page["properties"]["IMDB"]["url"]
-    movie_title = ""
-    if len(page["properties"]["Title"]["title"]) > 0:
-        movie_title = page["properties"]["Title"]["title"][0]["text"]["content"]
+        imdb_link = page["properties"]["IMDB"]["url"]
+        movie_title = ""
+        if len(page["properties"]["Title"]["title"]) > 0:
+            movie_title = page["properties"]["Title"]["title"][0]["text"]["content"]
 
-    logger.info(f"Updating the movie: {movie_title}")
+        logger.info(f"Updating the movie: {movie_title}")
 
-    movie = None
-    if imdb_link:
-        movie_id = get_id_from_url(imdb_link)
-        if movie_id:
-            movie = imdb_adapter.get_movie(movie_id)
-    elif movie_title:
-        movie = imdb_adapter.search_movie(movie_title)
+        movie = None
+        if imdb_link:
+            movie_id = get_id_from_url(imdb_link)
+            if movie_id:
+                movie = imdb_adapter.get_movie(movie_id)
+        elif movie_title:
+            movie = imdb_adapter.search_movie(movie_title)
 
-    if movie:
+        if not movie:
+            raise MovieNotFound(f"Couldn't find the related movie for: {movie_title}")
+
         properties = {}
         updated_properties = []
         try:
@@ -158,48 +109,46 @@ def update_page_info(page, imdb_adapter, notion_client: Client):
         except Exception as e:
             logger.error(f"Error updating Genre for {movie_title}: {e}")
 
-        notion_client.pages.update(page_id=page["id"], properties=properties)
+        notion_api.update_page(page_id=page_id, properties=properties)
         logger.info(f"Successfully updated {movie.title}:\n" + "\n".join(f"- {prop}" for prop in updated_properties))
-    else:
-        logger.error(f"Couldn't find the related movie for: {movie_title}")
 
-def get_database_id_from_url(database_url:str) -> str:
-    result = re.search(r"notion\.so/[^/]+/(\w+)", database_url)
-    if result:
-        result = result.group(1)
-        if len(result) == 32:
-            return result
-    return None
+    except (NotionAPIError, MovieNotFound) as e:
+        logger.error(f"Failed to update page {page_id}: {e}")
 
 def main():
     if not config.NOTION_TOKEN:
         logger.error("NOTION_TOKEN not found.")
         sys.exit(1)
 
-    notion = Client(auth=config.NOTION_TOKEN)
-    imdb_adapter = IMDbInfoAdapter()
+    try:
+        notion_api = NotionAPI(config.NOTION_TOKEN)
+        imdb_adapter = IMDbInfoAdapter()
 
-    DATABASE_ID = None
-    if config.NOTION_DATABASE_URL:
-        DATABASE_ID = get_database_id_from_url(config.NOTION_DATABASE_URL)
-    
-    if not DATABASE_ID and config.NOTION_DATABASE_NAME:
-        DATABASE_ID = find_database_id(database_name=config.NOTION_DATABASE_NAME, notion_client=notion)
+        DATABASE_ID = None
+        if config.NOTION_DATABASE_URL:
+            DATABASE_ID = notion_api.get_database_id_from_url(config.NOTION_DATABASE_URL)
+        
+        if not DATABASE_ID and config.NOTION_DATABASE_NAME:
+            DATABASE_ID = notion_api.find_database_id(config.NOTION_DATABASE_NAME)
 
-    if not DATABASE_ID:
-        logger.error("Database can not be found.")
+        if not DATABASE_ID:
+            logger.error("Database can not be found.")
+            sys.exit(1)
+
+        pages = notion_api.get_empty_pages(database_id=DATABASE_ID)
+
+        if pages:
+            logger.info(f"Found {len(pages)} empty entries. Updating now...")
+            for page in pages:
+                update_page(page, imdb_adapter, notion_api)
+        else:
+            logger.info("No entries found")
+
+        logger.info("Finished")
+
+    except NotionAPIError as e:
+        logger.error(f"A critical Notion API error occurred: {e}")
         sys.exit(1)
-
-    pages = get_empty_pages(database_id=DATABASE_ID, notion_client=notion)
-
-    if pages:
-        logger.info(f"Found {len(pages)} empty entries. Updating now...")
-        for page in pages:
-            update_page_info(page, imdb_adapter, notion_client=notion)
-    else:
-        logger.info("No entries found")
-
-    logger.info("Finished")
 
 if __name__ == "__main__":
     main()
