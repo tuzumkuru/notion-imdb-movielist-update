@@ -91,7 +91,10 @@ After finishing the installation steps you can run the script with the following
 python main.py
 ```
 
-The script will search the database for missing director or duration properties and when found will try to find the movie from the IMDB database using Cinemagoers. If IMDB URL is provided it will look through the Movie ID and find an exact result if the URL is correct. If not provided, it will search IMDB with the name provided and check for the exact name match. So providing name may give wrong results. 
+The script will search your Notion database for pages where the 'Director' or 'Duration [min]' properties are empty. For each of these pages, it will:
+1.  Attempt to find the movie on IMDb using the 'IMDB' URL property if it exists.
+2.  If no IMDb URL is present, it will search IMDb by the movie's 'Title'.
+3.  Once found, it will populate the empty properties in your Notion page with the information from IMDb, such as director, duration, rating, plot, and genres.
 
 You can create recurring tasks to run the script in a determined interval. 
 
@@ -147,7 +150,7 @@ This readme file is created using a template from https://www.makeareadme.com
 
 Thanks to @ramnes for Notion Python SDK (https://github.com/ramnes/notion-sdk-py)
 
-Thanks to the Cinemagoer team (https://github.com/cinemagoer)
+Thanks to @tveronesi for the imdbinfo library (https://github.com/tveronesi/imdbinfo)
 
 Thanks to Notion and IMDB
 
