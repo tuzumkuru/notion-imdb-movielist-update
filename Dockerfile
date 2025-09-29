@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy the application files into the container
-COPY *.py .
+COPY src/ .
 COPY requirements.txt .
 
 # Install dependencies
