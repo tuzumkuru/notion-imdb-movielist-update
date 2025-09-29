@@ -88,7 +88,7 @@ You can find more information about these variables [here](#environmental-variab
 After finishing the installation steps you can run the script with the following command:
 
 ```bash
-python main.py
+python src/main.py
 ```
 
 The script will search your Notion database for pages where the 'Director' or 'Duration [min]' properties are empty. For each of these pages, it will:
