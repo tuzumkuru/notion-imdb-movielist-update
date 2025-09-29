@@ -1,6 +1,5 @@
 from typing import Optional
-from imdbinfo import get_movie as get_imdb_movie_from_lib
-from imdbinfo import search_title
+from imdbinfo import get_movie as get_imdb_movie_from_lib, search_title
 from imdb_adapter import IMDbAdapter
 from movie import Movie
 from exceptions import MovieNotFound
