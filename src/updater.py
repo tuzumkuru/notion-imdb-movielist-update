@@ -42,9 +42,11 @@ class Updater:
         return None
 
     def _create_notion_properties(self, movie: Movie) -> dict:
+        # Ensure imdb_id has the 'tt' prefix for the URL
+        imdb_id = movie.imdb_id if movie.imdb_id.startswith('tt') else f"tt{movie.imdb_id}"
         properties = {
             "Title": {"title": [{"text": {"content": movie.title}}]},
-            "IMDB": {"url": f"https://www.imdb.com/title/tt{movie.imdb_id}"},
+            "IMDB": {"url": f"https://www.imdb.com/title/{imdb_id}"},
         }
         if movie.director and not movie.is_series:
             properties["Director"] = {"select": {"name": movie.director}}
