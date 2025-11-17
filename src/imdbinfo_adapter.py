@@ -18,7 +18,7 @@ class IMDbInfoAdapter(IMDbAdapter):
     def search_movie(self, title: str) -> Movie:
         try:
             search_results = search_title(title)
-            if not search_results.titles:
+            if not search_results or not search_results.titles:
                 raise MovieNotFound(f"Movie with title '{title}' not found.")
 
             title_words = set(title.lower().split())
