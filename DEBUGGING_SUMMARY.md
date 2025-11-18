@@ -13,8 +13,9 @@ The Notion-IMDB Movie List Update application stopped working. The task was to r
 ### 2. Code Analysis
 - Reviewed all source files to understand the application architecture
 - Tested API compatibility with the imdbinfo library
+- Discovered Notion API breaking change in notion-client 2.7.0
 - Created mock tests to validate code paths
-- Identified potential issues through systematic testing
+- Identified issues through systematic testing
 
 ## Bugs Found and Fixed
 
@@ -37,9 +38,37 @@ if not search_results or not search_results.titles:  # ✅ Handles None safely
     raise MovieNotFound(...)
 ```
 
-**Impact:** HIGH - This is likely the primary reason the app stopped working. When IMDB searches return no results (due to website changes, rate limiting, or network issues), the application would crash instead of gracefully handling the error.
+**Impact:** HIGH - When IMDB searches return no results (due to website changes, rate limiting, or network issues), the application would crash instead of gracefully handling the error.
 
-### Bug #2: Potential Issue - IMDB URL Format [IMPROVED]
+### Bug #2: Critical - Notion API Breaking Change [FIXED]
+
+**File:** `src/notion_api.py` line 67
+
+**Problem:**
+```python
+# Old API - no longer works in notion-client >= 2.7.0
+return self.client.databases.query(database_id=database_id, **empty_page_filter).get("results")
+```
+
+**Error:**
+```
+'DatabasesEndpoint' object has no attribute 'query'
+```
+
+The Notion SDK version 2.7.0 introduced a breaking change:
+- Removed: `client.databases.query()`
+- Added: `client.data_sources.query()`
+- Databases are now treated as "data sources" in the API
+
+**Solution:**
+```python
+# New API - works with notion-client >= 2.7.0
+return self.client.data_sources.query(data_source_id=database_id, **empty_page_filter).get("results")
+```
+
+**Impact:** HIGH - This is the **primary reason** the app stopped working. The application would crash immediately when trying to query the Notion database with notion-client 2.7.0+.
+
+### Bug #3: Improvement - IMDB URL Format [IMPROVED]
 
 **File:** `src/updater.py` line 47
 
@@ -79,26 +108,35 @@ python test_app.py
 
 ## Root Cause Analysis
 
-The application stopped working because:
+The application stopped working because of **two critical bugs**:
 
-1. **Primary Cause:** When the imdbinfo library's `search_title()` function returns `None` (which happens when no search results are found), the code attempted to access the `.titles` attribute on `None`, causing an AttributeError.
+1. **Primary Cause - Notion API Breaking Change:**
+   - notion-client library version 2.7.0 removed the `databases.query()` method
+   - Changed to `data_sources.query()` with different parameter names
+   - This caused an immediate AttributeError: `'DatabasesEndpoint' object has no attribute 'query'`
+   - No version pinning in requirements.txt allowed automatic updates to this breaking version
 
-2. **Why this started happening:**
-   - IMDB website structure may have changed, affecting the scraping library
-   - IMDB may have implemented rate limiting or blocking
-   - Network connectivity issues could lead to failed searches
-   - The imdbinfo library may have updated its error handling to return `None` more frequently
+2. **Secondary Cause - Search Result Null Handling:**
+   - The imdbinfo library's `search_title()` can return `None` when no results found
+   - Code attempted to access `.titles` attribute on `None`, causing AttributeError
+   - This occurred when:
+     - IMDB website structure changes affected the scraping library
+     - IMDB implemented rate limiting or blocking
+     - Network connectivity issues led to failed searches
+     - The imdbinfo library updated its error handling
 
-3. **Why it wasn't caught earlier:**
-   - No unit tests existed to catch this edge case
-   - The error only occurs when searches return no results
-   - Testing likely used known movies that always returned results
+3. **Why these weren't caught earlier:**
+   - No unit tests existed to catch these edge cases
+   - No integration tests with actual Notion/IMDB APIs
+   - No CI/CD pipeline to test before deployment
+   - No version pinning to prevent breaking dependency updates
 
 ## Files Changed
 
 ### Modified Files
 1. `src/imdbinfo_adapter.py` - Fixed None check bug
 2. `src/updater.py` - Added IMDB ID format safety check
+3. `src/notion_api.py` - Updated to new Notion API (data_sources.query)
 
 ### New Files
 1. `test_app.py` - Comprehensive test suite
@@ -116,7 +154,7 @@ The application stopped working because:
 - ✅ All Python files compile successfully
 - ✅ No syntax errors
 - ✅ Code follows existing style and patterns
-- ✅ Minimal changes (only 4 lines modified in production code)
+- ✅ Minimal changes (only 5 lines modified in production code)
 
 ### Functional Testing
 - ✅ Application runs without errors with valid configuration

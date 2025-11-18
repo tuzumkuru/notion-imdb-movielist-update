@@ -30,9 +30,42 @@ if not search_results or not search_results.titles:  # ✅ Safe
 
 **Impact:** 
 - **High** - This would cause the application to crash whenever a movie search returned no results
-- This is likely the primary reason the app "stopped working"
+- This is likely one of the reasons the app "stopped working"
 
-### 2. Improvement: IMDB ID Format Safety Check
+### 2. Critical: Notion API Breaking Change - databases.query() removed
+
+**Location:** `src/notion_api.py` line 67
+
+**Issue:**
+The Notion SDK (notion-client) version 2.7.0 introduced a breaking change where `databases.query()` was removed. The API now uses `data_sources.query()` instead, as databases are now treated as "data sources" in the Notion API.
+
+**Error Message:**
+```
+'DatabasesEndpoint' object has no attribute 'query'
+```
+
+**Root Cause:**
+```python
+# Old API (no longer works in notion-client >= 2.7.0)
+return self.client.databases.query(database_id=database_id, **empty_page_filter).get("results")
+```
+
+**Fix:**
+Updated to use the new data sources endpoint:
+```python
+# New API (notion-client >= 2.7.0)
+return self.client.data_sources.query(data_source_id=database_id, **empty_page_filter).get("results")
+```
+
+**Changes Required:**
+- Changed endpoint: `client.databases.query` → `client.data_sources.query`
+- Changed parameter name: `database_id=` → `data_source_id=`
+
+**Impact:**
+- **High** - This would cause the application to crash immediately when trying to query the Notion database
+- This is the **primary reason** the app stopped working for users with notion-client >= 2.7.0
+
+### 3. Improvement: IMDB ID Format Safety Check
 
 **Location:** `src/updater.py` line 47
 
@@ -82,26 +115,38 @@ All tests pass successfully with the current fixes.
 
 ## Root Cause Analysis
 
-The application likely stopped working because:
+The application stopped working because of **two critical bugs**:
 
-1. **Primary Cause:** The imdbinfo library changed behavior or IMDB started returning empty/null search results more frequently, triggering the AttributeError bug
-2. **Secondary Factors:** 
+1. **Notion API Breaking Change (Primary Cause):**
+   - notion-client library version 2.7.0 removed `databases.query()` method
+   - Changed to `data_sources.query()` with different parameter names
+   - This caused an immediate AttributeError when trying to query databases
+
+2. **Search Result Null Handling (Secondary Cause):**
+   - The imdbinfo library can return `None` when searches fail
    - IMDB website structure changes could affect the library's scraping
    - Rate limiting or blocking could cause search failures
    - Network issues could lead to None returns
+
+3. **Contributing Factors:**
+   - No version pinning in requirements.txt allowed automatic updates to breaking versions
+   - No unit tests to catch these issues before deployment
 
 ## Recommendations
 
 1. ✅ **Already Implemented:** Add null checks for all external API responses
 2. ✅ **Already Implemented:** Defensive programming for URL/ID formatting
-3. 🔄 **Future:** Add retry logic for network failures
-4. 🔄 **Future:** Add logging for all API responses to aid debugging
-5. 🔄 **Future:** Consider caching IMDB data to reduce API calls
-6. 🔄 **Future:** Add integration tests that can run against a test Notion database
+3. ✅ **Already Implemented:** Update to new Notion API (data_sources.query)
+4. 🔄 **Future:** Pin dependency versions to avoid breaking changes
+5. 🔄 **Future:** Add retry logic for network failures
+6. 🔄 **Future:** Add logging for all API responses to aid debugging
+7. 🔄 **Future:** Consider caching IMDB data to reduce API calls
+8. 🔄 **Future:** Add integration tests that can run against a test Notion database
+9. 🔄 **Future:** Set up CI/CD to run tests before deployment
 
 ## Compatibility
 
 - ✅ Python 3.12+ (tested)
 - ✅ imdbinfo 0.6.3 (current version)
-- ✅ notion-client 2.7.0 (current version)
+- ✅ notion-client 2.7.0 (current version) - **Now compatible!**
 - ✅ All dependencies install and work correctly
