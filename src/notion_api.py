@@ -82,9 +82,13 @@ class NotionAPI:
 
     @staticmethod
     def get_database_id_from_url(database_url: str) -> str | None:
-        result = re.search(r"notion\.so/[^/]+/(\w+)", database_url)
+        # Match database ID with or without hyphens
+        result = re.search(r"notion\.so/[^/]+/([\w-]+)", database_url)
         if result:
-            result = result.group(1)
-            if len(result) == 32:
-                return result
+            database_id = result.group(1)
+            # Remove hyphens to get the raw 32-char hex string
+            id_without_hyphens = database_id.replace("-", "")
+            if len(id_without_hyphens) == 32:
+                # Convert to UUID format with hyphens (8-4-4-4-12)
+                return f"{id_without_hyphens[0:8]}-{id_without_hyphens[8:12]}-{id_without_hyphens[12:16]}-{id_without_hyphens[16:20]}-{id_without_hyphens[20:32]}"
         return None
