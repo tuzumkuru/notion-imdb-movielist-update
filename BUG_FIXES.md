@@ -6,7 +6,52 @@ This document outlines the bugs found and fixed in the Notion-IMDB Movie List Up
 
 ## Bugs Fixed
 
-### 1. Critical: AttributeError when search_title returns None
+### 1. Critical: Database ID Format - Missing UUID Hyphens
+
+**Location:** `src/notion_api.py` lines 84-94
+
+**Issue:**
+The Notion API requires database IDs in UUID format with hyphens (e.g., `de18023b-1590-4f87-af9b-47aea99feeaa`), but the code was extracting IDs from URLs without hyphens (e.g., `de18023b15904f87af9b47aea99feeaa`).
+
+**Error Message:**
+```
+Could not find database with ID: de18023b-1590-4f87-af9b-47aea99feeaa. 
+Make sure the relevant pages and databases are shared with your integration.
+```
+
+**Root Cause:**
+```python
+# Old code - extracts ID without hyphens
+result = re.search(r"notion\.so/[^/]+/(\w+)", database_url)
+if result:
+    result = result.group(1)
+    if len(result) == 32:
+        return result  # Returns: de18023b15904f87af9b47aea99feeaa
+```
+
+**Fix:**
+Converts the extracted ID to proper UUID format with hyphens:
+```python
+# New code - converts to UUID format
+result = re.search(r"notion\.so/[^/]+/([\w-]+)", database_url)
+if result:
+    database_id = result.group(1)
+    id_without_hyphens = database_id.replace("-", "")
+    if len(id_without_hyphens) == 32:
+        # Convert to UUID format (8-4-4-4-12)
+        return f"{id_without_hyphens[0:8]}-{id_without_hyphens[8:12]}-{id_without_hyphens[12:16]}-{id_without_hyphens[16:20]}-{id_without_hyphens[20:32]}"
+```
+
+**Benefits:**
+- Handles URLs with or without hyphens in the ID
+- Ensures proper UUID format for Notion API
+- Returns: `de18023b-1590-4f87-af9b-47aea99feeaa`
+
+**Impact:** 
+- **High** - The Notion API cannot find databases without proper UUID formatting
+- This was causing the "Could not find database" error even when the database existed and was shared
+
+### 2. Critical: AttributeError when search_title returns None
 
 **Location:** `src/imdbinfo_adapter.py` line 21
 
@@ -30,9 +75,9 @@ if not search_results or not search_results.titles:  # ✅ Safe
 
 **Impact:** 
 - **High** - This would cause the application to crash whenever a movie search returned no results
-- This is likely one of the reasons the app "stopped working"
+- This is one of the reasons the app "stopped working"
 
-### 2. Critical: Notion API Breaking Change - databases.query() removed
+### 3. Critical: Notion API Breaking Change - databases.query() removed
 
 **Location:** `src/notion_api.py` line 67
 
@@ -65,7 +110,7 @@ return self.client.data_sources.query(data_source_id=database_id, **empty_page_f
 - **High** - This would cause the application to crash immediately when trying to query the Notion database
 - This is the **primary reason** the app stopped working for users with notion-client >= 2.7.0
 
-### 3. Improvement: IMDB ID Format Safety Check
+### 4. Improvement: IMDB ID Format Safety Check
 
 **Location:** `src/updater.py` line 47
 
