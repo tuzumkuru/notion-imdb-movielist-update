@@ -64,7 +64,7 @@ class NotionAPI:
             }
         }
         try:
-            return self.client.databases.query(database_id=database_id, **empty_page_filter).get("results")
+            return self.client.data_sources.query(data_source_id=database_id, **empty_page_filter).get("results")
         except Exception as e:
             raise NotionAPIError(f"Error getting empty pages: {e}")
 
